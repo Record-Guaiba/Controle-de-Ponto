@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Ponto - Record Guaíba</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+        }
+        .logo-container {
+            text-align: center;
+            padding: 15px 0;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .logo-container img {
+            max-width: 180px;
+            height: auto;
+        }
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 100%;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        h1 {
+            color: #003366;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="time"], input[type="number"], select {
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background-color: #CC0000;
+            color: white;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #AA0000;
+        }
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #F0F8FF;
+            border-radius: 8px;
+            display: none;
+            border-left: 5px solid #2b6eb1;
+            flex: 1;
+        }
+        .result h3 {
+            margin-top: 0;
+            color: #2b6eb1;
+            border-bottom: 1px solid #B0C4DE;
+            padding-bottom: 10px;
+        }
+        .result-item {
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .result-item.saida {
+            background-color: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            font-weight: bold;
+        }
+        .result-item.diferenca {
+            background-color: #f6ffed;
+            border-left: 4px solid #52c41a;
+            font-weight: bold;
+        }
+        .result-item.alerta {
+            background-color: #fff7e6;
+            border-left: 4px solid #faad14;
+            font-weight: bold;
+        }
+        .result-item.positivo {
+            color: #52c41a;
+        }
+        .result-item.negativo {
+            color: #f5222d;
+        }
+        .result-item strong {
+            color: #2b6eb1;
+        }
+        .options-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .option-card {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .option-card:hover {
+            border-color: #CC0000;
+        }
+        .option-card.active {
+            background-color: #F0F8FF;
+            border-color: #2b6eb1;
+            box-shadow: 0 0 0 2px #B0C4DE;
+        }
+        .manual-fields {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .total-info {
+            font-weight: bold;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed hsl(123, 66%, 34%);
+            color: hsl(123, 66%, 34%);
+        }
+        .form-group span {
+            margin-left: 10px;
+            color: #666;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .checkbox-group input {
+            width: auto;
+            margin-right: 10px;
+        }
+        @media (min-width: 768px) {
+            .main-container {
+                max-width: 650px;
+                margin: 0 auto;
+                padding: 20px 0;
+            }
+        }
+        /* Estilo do POP de alerta */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .popup-alert {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            animation: popIn 0.3s;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .popup-alert h2 {
+            color: #d9534f;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .popup-alert p {
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .popup-alert button {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: auto;
+            margin: 0 auto;
+        }
+        .popup-alert button:hover {
+            background-color: #c9302c;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="https://upload.wikimedia.org/wikipedia/pt/b/b3/Logotipo_da_Record_Gua%C3%ADba.png" alt="Record Guaíba">
+    </div>
+    
+    <div class="main-container">
+        <div class="container">
+            <h1>Controle de Ponto Flexível</h1>
+            
+            <div class="options-group">
+                <div class="option-card active" onclick="setJornadaType('automatic')">
+                    <h3>Automático</h3>
+                    <p>Calcula horários com base na entrada</p>
+                </div>
+                <div class="option-card" onclick="setJornadaType('manual')">
+                    <h3>Manual</h3>
+                    <p>Defina seus horários de intervalo</p>
+                </div>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="trabalha-sabado">
+                <label for="trabalha-sabado">Trabalha no sábado?</label>
+            </div>
+            
+            <div id="automatic-fields">
+                <div class="form-group">
+                    <label for="entrada-auto">Horário de Entrada:</label>
+                    <input type="time" id="entrada-auto" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="jornada-type">Tipo de Jornada:</label>
+                    <select id="jornada-type">
+                        <option value="6.25">6 horas e 15 minutos</option>
+                        <option value="9.8">9 horas e 48 minutos</option>
+                        <option value="9">9 horas (sábado)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="intervalo-auto">Duração do Intervalo:</label>
+                    <input type="number" id="intervalo-auto" min="15" max="120" step="15" value="60">
+                    <span>minutos</span>
+                </div>
+            </div>
+            
+            <div id="manual-fields" class="manual-fields">
+                <div class="form-group">
+                    <label for="entrada-manual">Horário de Entrada:</label>
+                    <input type="time" id="entrada-manual">
+                </div>
+                
+                <div class="form-group">
+                    <label for="saida-intervalo">Saída para Intervalo:</label>
+                    <input type="time" id="saida-intervalo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="retorno-intervalo">Retorno do Intervalo:</label>
+                    <input type="time" id="retorno-intervalo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="saida-manual">Saída:</label>
+                    <input type="time" id="saida-manual">
+                </div>
+                
+                <div class="form-group">
+                    <label for="jornada-type-manual">Tipo de Jornada:</label>
+                    <select id="jornada-type-manual">
+                        <option value="6.25">6 horas e 15 minutos</option>
+                        <option value="9.8">9 horas e 48 minutos</option>
+                        <option value="9">9 horas (sábado)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button onclick="calcularHorarios()">Calcular Horários</button>
+            
+            <div id="resultado" class="result">
+                <h3>Horários do Dia</h3>
+                <div class="result-item"><strong>Entrada:</strong> <span id="entrada-resultado"></span></div>
+                <div class="result-item"><strong>Saída para Intervalo:</strong> <span id="saida-intervalo-resultado"></span></div>
+                <div class="result-item"><strong>Retorno do Intervalo:</strong> <span id="retorno-intervalo-resultado"></span></div>
+                <div class="result-item saida"><strong>SAÍDA:</strong> <span id="saida-resultado" style="font-weight: bold; color: #1890ff;"></span></div>
+                <div id="diferenca-container" class="result-item diferenca" style="display: none;">
+                    <strong>DIFERENÇA:</strong> <span id="diferenca-resultado"></span>
+                </div>
+                <div id="alerta-intervalo" class="result-item alerta" style="display: none;">
+                    <strong>ATENÇÃO:</strong> <span id="alerta-intervalo-texto"></span>
+                </div>
+                <div id="tempo-extra-container" class="result-item" style="display: none;">
+                    <strong>TEMPO EXTRA:</strong> <span id="tempo-extra-resultado"></span>
+                </div>
+                <div class="total-info">
+                    <span id="total-dia"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'automatic';
+        
+        // Atualiza o tipo de jornada quando o checkbox é alterado
+        document.getElementById('trabalha-sabado').addEventListener('change', function() {
+            const isSabado = this.checked;
+            const jornadaType = document.getElementById('jornada-type');
+            const jornadaTypeManual = document.getElementById('jornada-type-manual');
+            
+            if (isSabado) {
+                jornadaType.value = '9';
+                jornadaTypeManual.value = '9';
+            } else {
+                jornadaType.value = '9.8';
+                jornadaTypeManual.value = '9.8';
+            }
+        });
+        
+        function setJornadaType(type) {
+            currentMode = type;
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            document.getElementById('automatic-fields').style.display = type === 'automatic' ? 'block' : 'none';
+            document.getElementById('manual-fields').style.display = type === 'manual' ? 'block' : 'none';
+        }
+        
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+        
+        function minutesToTime(totalMinutes) {
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+        
+        function formatDiferenca(minutos) {
+            const horas = Math.floor(Math.abs(minutos) / 60);
+            const mins = Math.abs(minutos) % 60;
+            const sinal = minutos >= 0 ? '+' : '-';
+            
+            return `${sinal} ${horas}h${mins.toString().padStart(2, '0')}min`;
+        }
+        
+        function calcularHorarios() {
+            if (currentMode === 'automatic') {
+                calcularAutomatico();
+            } else {
+                calcularManual();
+            }
+        }
+        
+        function showIntervaloAlert(intervalo) {
+            const popupHTML = `
+                <div class="popup-overlay" id="intervalo-popup">
+                    <div class="popup-alert">
+                        <h2>⚠️ Atenção! ⚠️</h2>
+                        <p>Você realizou apenas ${intervalo} minutos de intervalo!<br><br>
+                        O intervalo mínimo recomendado é de 1 hora (60 minutos) para garantir seu bem-estar e conformidade com as normas trabalhistas. Por favor, tenha mais atenção com seus horários de descanso! ⏰💙</p>
+                        <button onclick="document.getElementById('intervalo-popup').remove()">Sair</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', popupHTML);
+        }
+        
+        function calcularAutomatico() {
+            const entradaInput = document.getElementById('entrada-auto').value;
+            if (!entradaInput) {
+                alert('Por favor, informe o horário de entrada.');
+                return;
+            }
+            
+            const jornadaType = parseFloat(document.getElementById('jornada-type').value);
+            let intervalo = parseInt(document.getElementById('intervalo-auto').value);
+            
+            // Verificar se o intervalo é menor que 1 hora (exceto para jornada de 6h15min)
+            const alertaIntervalo = document.getElementById('alerta-intervalo');
+            if (intervalo < 60 && jornadaType >= 6 && jornadaType !== 6.25) {
+                alertaIntervalo.style.display = 'flex';
+                document.getElementById('alerta-intervalo-texto').textContent = 
+                    'Realizou tempo inferior a 1 hora de intervalo (' + intervalo + 'min)';
+                // Mostrar popup de alerta
+                showIntervaloAlert(intervalo);
+            } else {
+                alertaIntervalo.style.display = 'none';
+            }
+            
+            const [horaEntrada, minutoEntrada] = entradaInput.split(':').map(Number);
+            const entrada = new Date();
+            entrada.setHours(horaEntrada, minutoEntrada, 0, 0);
+            
+            // Calcular minutos totais de trabalho (jornada total - intervalo)
+            // Para jornada de 6h15min (6.25h), não subtrai intervalo (jornada contínua)
+            const totalMinutosTrabalho = jornadaType === 6.25 ? (jornadaType * 60) : (jornadaType * 60) - 60;
+            
+            // Distribuir tempo de trabalho (60% manhã, 40% tarde - ajustável)
+            const minutosManha = Math.round(totalMinutosTrabalho * 0.6);
+            const minutosTarde = totalMinutosTrabalho - minutosManha;
+            
+            // Calcular todos os horários
+            const saidaIntervalo = new Date(entrada.getTime() + minutosManha * 60000);
+            const retornoIntervalo = new Date(saidaIntervalo.getTime() + intervalo * 60000);
+            
+            // Calcular saída considerando o tempo extra se o intervalo for maior que 1h
+            const tempoExtraIntervalo = intervalo - 60;
+            const saida = new Date(jornadaType === 6.25 ? 
+                entrada.getTime() + totalMinutosTrabalho * 60000 :  // Jornada contínua para 6h15min
+                retornoIntervalo.getTime() + (minutosTarde + tempoExtraIntervalo) * 60000);
+            
+            exibirResultados(
+                entrada,
+                jornadaType === 6.25 ? null : saidaIntervalo,  // Não mostra intervalo para 6h15min
+                jornadaType === 6.25 ? null : retornoIntervalo, // Não mostra intervalo para 6h15min
+                saida,
+                jornadaType,
+                intervalo,
+                0, // Diferença
+                tempoExtraIntervalo > 0 ? tempoExtraIntervalo : 0
+            );
+        }
+        
+        function calcularManual() {
+            const entradaInput = document.getElementById('entrada-manual').value;
+            const saidaIntervaloInput = document.getElementById('saida-intervalo').value;
+            const retornoIntervaloInput = document.getElementById('retorno-intervalo').value;
+            const saidaInput = document.getElementById('saida-manual').value;
+            const jornadaType = parseFloat(document.getElementById('jornada-type-manual').value);
+            
+            if (!entradaInput || !saidaInput) {
+                alert('Por favor, preencha pelo menos a entrada e saída.');
+                return;
+            }
+            
+            // Para jornada de 6h15min, não é obrigatório preencher intervalo
+            if (jornadaType !== 6.25 && (!saidaIntervaloInput || !retornoIntervaloInput)) {
+                alert('Por favor, preencha todos os horários.');
+                return;
+            }
+            
+            // Converter para minutos
+            const entradaMin = timeToMinutes(entradaInput);
+            const saidaMin = timeToMinutes(saidaInput);
+            const saidaIntervaloMin = saidaIntervaloInput ? timeToMinutes(saidaIntervaloInput) : 0;
+            const retornoIntervaloMin = retornoIntervaloInput ? timeToMinutes(retornoIntervaloInput) : 0;
+            
+            // Validar sequência de horários
+            if (saidaMin <= entradaMin) {
+                alert('A saída deve ser após a entrada!');
+                return;
+            }
+            
+            if (jornadaType !== 6.25) {
+                if (saidaIntervaloMin <= entradaMin) {
+                    alert('A saída para intervalo deve ser após a entrada!');
+                    return;
+                }
+                
+                if (retornoIntervaloMin <= saidaIntervaloMin) {
+                    alert('O retorno do intervalo deve ser após a saída para intervalo!');
+                    return;
+                }
+                
+                if (saidaMin <= retornoIntervaloMin) {
+                    alert('A saída deve ser após o retorno do intervalo!');
+                    return;
+                }
+            }
+            
+            // Calcular intervalo
+            const intervalo = jornadaType === 6.25 ? 0 : retornoIntervaloMin - saidaIntervaloMin;
+            
+            // Verificar intervalo mínimo (apenas para jornadas que exigem intervalo e não é 6h15min)
+            const alertaIntervalo = document.getElementById('alerta-intervalo');
+            if (intervalo < 60 && jornadaType >= 6 && jornadaType !== 6.25) {
+                alertaIntervalo.style.display = 'flex';
+                document.getElementById('alerta-intervalo-texto').textContent = 
+                    'Realizou tempo inferior a 1 hora de intervalo (' + intervalo + 'min)';
+                // Mostrar popup de alerta
+                showIntervaloAlert(intervalo);
+            } else {
+                alertaIntervalo.style.display = 'none';
+            }
+            
+            // Calcular tempo trabalhado
+            let totalMinutosTrabalhados;
+            if (jornadaType === 6.25) {
+                totalMinutosTrabalhados = saidaMin - entradaMin; // Jornada contínua
+            } else {
+                const minutosManha = saidaIntervaloMin - entradaMin;
+                const minutosTarde = saidaMin - retornoIntervaloMin;
+                totalMinutosTrabalhados = minutosManha + minutosTarde;
+            }
+            
+            // Calcular jornada esperada
+            const jornadaEsperadaMin = jornadaType * 60;
+            
+            // Calcular diferença
+            let diferencaMin;
+            if (jornadaType === 6.25) {
+                diferencaMin = totalMinutosTrabalhados - jornadaEsperadaMin; // Jornada contínua sem intervalo
+            } else {
+                diferencaMin = totalMinutosTrabalhados - (jornadaEsperadaMin - 60); // Considera 1h de intervalo padrão
+            }
+            
+            // Calcular tempo extra do intervalo (se maior que 1h)
+            const tempoExtraIntervalo = intervalo - 60 > 0 ? intervalo - 60 : 0;
+            
+            // Criar objetos Date para exibição
+            function createDateFromMinutes(minutes) {
+                const date = new Date();
+                date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+                return date;
+            }
+            
+            exibirResultados(
+                createDateFromMinutes(entradaMin),
+                jornadaType === 6.25 ? null : createDateFromMinutes(saidaIntervaloMin),
+                jornadaType === 6.25 ? null : createDateFromMinutes(retornoIntervaloMin),
+                createDateFromMinutes(saidaMin),
+                jornadaType,
+                intervalo,
+                diferencaMin,
+                tempoExtraIntervalo
+            );
+        }
+        
+        function exibirResultados(entrada, saidaIntervalo, retornoIntervalo, saida, jornadaType, intervalo, diferencaMin, tempoExtraIntervalo) {
+            function formatarHora(data) {
+                if (!data) return "Não aplicável";
+                return data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            document.getElementById('entrada-resultado').textContent = formatarHora(entrada);
+            document.getElementById('saida-intervalo-resultado').textContent = formatarHora(saidaIntervalo);
+            document.getElementById('retorno-intervalo-resultado').textContent = formatarHora(retornoIntervalo);
+            document.getElementById('saida-resultado').textContent = formatarHora(saida);
+            
+            // Mostrar diferença de horas
+            const diferencaContainer = document.getElementById('diferenca-container');
+            const diferencaResultado = document.getElementById('diferenca-resultado');
+            
+            if (diferencaMin !== 0) {
+                diferencaContainer.style.display = 'flex';
+                diferencaResultado.textContent = formatDiferenca(diferencaMin);
+                
+                diferencaContainer.classList.remove('positivo', 'negativo');
+                if (diferencaMin > 0) {
+                    diferencaContainer.classList.add('positivo');
+                    diferencaResultado.textContent += ' (horas extras)';
+                } else {
+                    diferencaContainer.classList.add('negativo');
+                    diferencaResultado.textContent += ' (a compensar)';
+                }
+            } else {
+                diferencaContainer.style.display = 'none';
+            }
+            
+            // Mostrar tempo extra do intervalo
+            const tempoExtraContainer = document.getElementById('tempo-extra-container');
+            const tempoExtraResultado = document.getElementById('tempo-extra-resultado');
+            
+            if (tempoExtraIntervalo > 0) {
+                tempoExtraContainer.style.display = 'flex';
+                tempoExtraResultado.textContent = `+${tempoExtraIntervalo}min (intervalo maior que 1h)`;
+                tempoExtraContainer.classList.add('positivo');
+            } else {
+                tempoExtraContainer.style.display = 'none';
+            }
+            
+            // Calcular totais
+            const totalMinutos = (jornadaType * 60);
+            const horasTotal = Math.floor(totalMinutos / 60);
+            const minutosTotal = totalMinutos % 60;
+            
+            let tempoTrabalhado, horasTrabalhadas, minutosTrabalhados;
+            
+            if (jornadaType === 6.25) {
+                // Jornada contínua de 6h15min sem intervalo
+                tempoTrabalhado = totalMinutos;
+                horasTrabalhadas = horasTotal;
+                minutosTrabalhados = minutosTotal;
+            } else {
+                // Jornadas com intervalo (considera 1h fixa de intervalo)
+                tempoTrabalhado = totalMinutos - 60;
+                horasTrabalhadas = Math.floor(tempoTrabalhado / 60);
+                minutosTrabalhados = tempoTrabalhado % 60;
+            }
+            
+            document.getElementById('total-dia').innerHTML = `
+                <strong>Jornada total:</strong> ${horasTotal}h${minutosTotal.toString().padStart(2, '0')}min<br>
+                <strong>Tempo trabalhado:</strong> ${horasTrabalhadas}h${minutosTrabalhados.toString().padStart(2, '0')}min<br>
+                ${jornadaType === 6.25 ? '' : `<strong>Intervalo:</strong> ${Math.floor(intervalo/60)}h${(intervalo%60).toString().padStart(2, '0')}min`}
+            `;
+            
+            document.getElementById('resultado').style.display = 'block';
+            
+            // Rolagem automática para o resultado
+            document.getElementById('resultado').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
